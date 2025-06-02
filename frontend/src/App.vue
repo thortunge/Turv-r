@@ -7,7 +7,6 @@ import L from 'leaflet'
 import { onMounted } from 'vue'
 import { type METJSONForecast } from './api/gen';
 import { weatherApi } from './api/gen/manualapi';
-import axios from 'axios'
 import { cabinRowToCabin, getCompactData, type UtCabin } from './api/utapi';
 
 const cabins: UtCabin[] = []
