@@ -1,5 +1,5 @@
 import axios from 'axios';
-import * as yrApi from './gen'
+import * as yrApi from './gen/met'
 
 const createApi = (baseURL: string) => {
     const api = axios.create({
@@ -10,7 +10,8 @@ const createApi = (baseURL: string) => {
 };
 
 const basePath = 'https://api.met.no/weatherapi/locationforecast/2.0'
+export const manualAxios = axios.create({
+    baseURL: basePath
+})
 
-export const api = {
-    weatherApi: new yrApi.DataApi(undefined, basePath, createApi(basePath))
-}
+export const metApi = new yrApi.DataApi(undefined, basePath, createApi(basePath))

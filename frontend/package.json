@@ -7,10 +7,12 @@
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
-    "api": "openapi-generator-cli generate --additional-properties=supportsES6=true,useSingleRequestParameter=true -g typescript-axios -i https://api.met.no/weatherapi/locationforecast/2.0/swagger -o ./src/api/gen"
+    "api:met": "openapi-generator-cli generate --additional-properties=supportsES6=true,useSingleRequestParameter=true -g typescript-axios -i https://api.met.no/weatherapi/locationforecast/2.0/swagger -o ./src/api/gen/met",
+    "api:stedsnavn": "openapi-generator-cli generate --additional-properties=supportsES6=true,useSingleRequestParameter=true -g typescript-axios -i https://ws.geonorge.no/stedsnavn/v1/openapi.json -o ./src/api/gen/stedsnavn"
   },
   "dependencies": {
     "axios": "^1.9.0",
+    "dayjs": "^1.11.13",
     "leaflet": "^1.9.4",
     "vue": "^3.5.13"
   },
