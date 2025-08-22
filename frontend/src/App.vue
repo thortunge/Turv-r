@@ -287,6 +287,7 @@ onMounted(async () => {
   display: grid;
   grid-template-rows: 100px 1fr 150px;
   pointer-events: none;
+  color: black;
 }
 
 #top-map-container {
