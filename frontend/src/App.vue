@@ -154,10 +154,6 @@ function recalculateMarkers() {
   }
 }
 
-function formatDate(date: Dayjs): string {
-  return date.format('dd DD. HH:00')
-}
-
 async function setUserPosition(): Promise<LatLngExpression | undefined> {
   if (!("geolocation" in navigator)) return Promise.resolve(undefined);
   return new Promise<LatLngExpression>((resolve) => {
