@@ -25,7 +25,7 @@
                     {{ getDailiyData(day.dayjs)?.weightedPercipitationMax.toFixed(0) }} mm
                   </div>
                   <div>
-                    {{ getDailiyData(day.dayjs)?.windMax.toFixed(0) }} m/s
+                    {{ getDailiyData(day.dayjs)?.tempMax.toFixed(0) }}°C
                   </div>
                 </div>
               </div>
@@ -64,6 +64,8 @@ type DailyWeatherData = {
   weightedPercipitationMax: number;
   wind: number;
   windMax: number;
+  tempMin: number;
+  tempMax: number;
 }
 
 type ManualWeatherSpot = {
@@ -183,6 +185,8 @@ type ProtoGuy = {
   weightedPercipitationMax: number;
   wind: number;
   windMax: number;
+  tempMin: number;
+  tempMax: number;
 }
 
 onMounted(async () => {
@@ -207,20 +211,28 @@ onMounted(async () => {
           weightedPercipitationMax: 0,
           weightedPercipitationMin: 0,
           wind: 0,
-          windMax: 0
+          windMax: 0,
+          tempMin: 0,
+          tempMax: 0
         }
         const rainMin = d.data.next_1_hours?.details.precipitation_amount_min || 0
         const rainMax = d.data.next_1_hours?.details.precipitation_amount_max || 0
         const rainProb = (d.data.next_1_hours?.details.probability_of_precipitation || 1)
-        const wind = d.data.instant.details?.wind_speed || null;
         weatherDataDict[key].percipitationMin += rainMin
         weatherDataDict[key].percipitationMax += rainMax
         weatherDataDict[key].weightedPercipitationMin += rainProb * rainMin
         weatherDataDict[key].weightedPercipitationMax += rainProb * rainMax
+        const wind = d.data.instant.details?.wind_speed || null;
         if (wind !== null) {
           weatherDataDict[key].wind = Math.min(weatherDataDict[key].wind, wind);
           weatherDataDict[key].windMax = Math.max(weatherDataDict[key].windMax, wind);
         }
+        const temperature = d.data.instant.details?.wind_speed || null;
+        if (temperature !== null) {
+          weatherDataDict[key].tempMin = Math.min(weatherDataDict[key].tempMin, temperature);
+          weatherDataDict[key].tempMax = Math.max(weatherDataDict[key].tempMax, temperature);
+        }
+
       }
       weatherSpot.dailyWeatherData = []
       for (const key of Object.keys(weatherDataDict)) {
@@ -232,7 +244,9 @@ onMounted(async () => {
           weightedPercipitationMin: keyData.percipitationMin,
           weightedPercipitationMax: keyData.percipitationMax,
           wind: keyData.wind,
-          windMax: keyData.windMax
+          windMax: keyData.windMax,
+          tempMin: keyData.tempMin,
+          tempMax: keyData.tempMax
         })
       }
     }
@@ -305,7 +319,8 @@ onMounted(async () => {
   grid-template-columns: repeat(7, 1fr);
   margin-bottom: 0.4rem;
   z-index: 500;
-  margin: 5px;
+  max-width: 500px;
+  margin: 0 auto 0 auto;
 }
 
 #map,
@@ -323,6 +338,7 @@ onMounted(async () => {
   border: 2px solid rgba(0, 0, 0, 0.2);
   cursor: pointer;
   pointer-events: all;
+  font-size: x-small;
 }
 
 .selected-day {
