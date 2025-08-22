@@ -1,7 +1,7 @@
 import * as L from 'leaflet'
 
 const iconSize: L.PointExpression =  [50, 50]
-const iconAnchor: L.PointExpression =  [25, 0]
+const iconAnchor: L.PointExpression =  [25, 25]
 
 const baseUrl = 'https://nrkno.github.io/yr-weather-symbols/'
 
