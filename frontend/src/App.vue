@@ -2,6 +2,12 @@
   <div>
     <input type="range" v-model="timeOffset" :min="0" :max="23">
   </div>
+  <div id="top-calendar-boy">
+    <div v-for="(day, i) in myDays" :key="i" class="day-box" @click="selectDay(day)">
+      <div>{{ day.format('dd') }}</div>
+      <div>{{ day.format('D') }}</div>
+    </div>
+  </div>
   <div>
     {{ formatDate(searchDate) }}
   </div>
@@ -193,6 +199,7 @@ type ProtoGuy = {
 }
 
 onMounted(async () => {
+  myDays.value = Array(7).fill(null).map((_, i) => dayjs().add(i, 'day'))
   map = L.map('map')
   map.setView([galdHoPiggenSpot.lat, galdHoPiggenSpot.lng], 7);
   setUserPosition();
