@@ -21,12 +21,16 @@
                 :class="{ 'selected-day': day.dayjs.format(dateWithoutTimeFormat) === selectedDate.format(dateWithoutTimeFormat), 'disabled-day': now.diff(day.dayjs, 'day') > 0 }">
                 {{ day.dayjs.format('dd DD.') }}
                 <div v-if="getDailiyData(day.dayjs)">
-                  <div>
+                  <div class="infront-of-cha">
                     {{ getDailiyData(day.dayjs)?.weightedPercipitationMax.toFixed(0) }} mm
                   </div>
-                  <div>
+                  <div class="infront-of-cha">
                     {{ getDailiyData(day.dayjs)?.tempMax.toFixed(0) }}°C
                   </div>
+                </div>
+                <div class="day-graph-container">
+                  <div></div>
+                  <canvas class="day-graph"></canvas>
                 </div>
               </div>
             </div>
@@ -45,11 +49,11 @@ import { manualAxios } from './api/metapi';
 import { iconNameToIcon } from './leaflet.icons'
 import dayjs, { Dayjs } from 'dayjs'
 import weekday from 'dayjs/plugin/weekday'
+import { Chart } from 'chart.js/auto'
 
 const timeOffset = ref(0)
 const selectedDate = ref(dayjs().hour(0).second(0).hour(0))
 const now = ref<Dayjs>(dayjs())
-
 const searchDate = computed<Dayjs>(() => {
   return selectedDate.value.add(timeOffset.value, 'hour')
 })
@@ -83,10 +87,10 @@ type DailyData = {
 }
 
 const dayArray = ref<DailyData[]>([])
+const chartArray: Chart[] = [];
 const baseFormat = 'YYYY-MM-DD HH:mm:ss'
 const dateWithoutTimeFormat = 'YYYY-MM-DD'
 const selectedLocation = ref<ManualWeatherSpot>()
-
 const galdHoPiggenSpot = { lat: 61.63615640427303, lng: 8.312659263610842, description: 'Galdhøpiggen' }
 
 function getDailiyData(day: Dayjs) {
@@ -115,7 +119,7 @@ const weatherSpots: ManualWeatherSpot[] = [
   { lat: 62.19562404557709, lng: 10.777587890625002, description: 'Tynset' },
 ]
 
-watch(searchDate, () => recalculateMarkers())
+watch(searchDate, recalculateMarkers)
 
 function dayClicked(day: Dayjs) {
   if (day.diff(now.value, 'day') < 0) return;
@@ -269,6 +273,48 @@ onMounted(async () => {
 
   function leafletMarkerClicked(weatherSpot: ManualWeatherSpot) {
     selectedLocation.value = weatherSpot;
+    const dayCanvases = document.querySelectorAll('.day-graph')
+    const dayDayas = selectedLocation.value.weatherData;
+    if (!dayDayas) return;
+    let i = 0;
+    for (let day of dayArray.value) {
+      const canvas = dayCanvases[i] as HTMLCanvasElement;
+      const dailyData = dayDayas.properties.timeseries.filter(t => {
+        const hourDiff = dayjs(t.time).diff(day.dayjs, 'hour');
+        return hourDiff <= 23 && hourDiff > 0
+      })
+      const data = dailyData.map(d => d.data.instant.details?.air_temperature || 0)
+      const labels = new Array(data.length).fill(0).map((_, i) => i);
+      if( chartArray[i] ) chartArray[i].destroy(); 
+      const chart = new Chart(
+        canvas,
+        {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [{
+              data,
+              tension: 0.3,
+              pointRadius: 0,
+              borderWidth: 2
+            }]
+          },
+          options: {
+            scales: {
+              x: { display: false },
+              y: { display: false, max: 20, min: -20 },
+            },
+            plugins: {
+              legend: { display: false},
+              tooltip: { enabled: false},
+            },
+            hover: { mode: undefined },
+          },
+        }
+      )
+      chartArray[i] = chart;
+      i++
+    }
   }
 
   const tileLayer = 'https://cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/{z}/{y}/{x}.png'
@@ -299,7 +345,7 @@ onMounted(async () => {
   height: 100%;
   z-index: 500;
   display: grid;
-  grid-template-rows: 100px 1fr 150px;
+  grid-template-rows: 100px 1fr min-content;
   pointer-events: none;
   color: black;
 }
@@ -311,6 +357,10 @@ onMounted(async () => {
 
 #middle-map-container {
   pointer-events: none;
+}
+
+#bottom-map-container{
+  margin: 5px;
 }
 
 #calendar-container {
@@ -339,6 +389,7 @@ onMounted(async () => {
   cursor: pointer;
   pointer-events: all;
   font-size: x-small;
+  position: relative;
 }
 
 .selected-day {
@@ -352,5 +403,23 @@ onMounted(async () => {
 #location-header-name {
   font-size: x-large;
   margin-top: 10px;
+}
+
+.day-graph-container {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  bottom: 0;
+  left: 0;
+}
+
+.day-graph {
+  width: 100%;
+  z-index: 5;
+}
+.infront-of-chart{  
+  z-index: 10;
 }
 </style>
