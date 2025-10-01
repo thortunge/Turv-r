@@ -408,8 +408,8 @@ onMounted(async () => {
   L.tileLayer(tileLayer, { attribution: tileAttribution }).addTo(map);
 
   async function onMapClicked(e: any) {
-    const lat = e.latlng.lat
-    const lng = e.latlng.lng
+    // const lat = e.latlng.lat
+    // const lng = e.latlng.lng
     // console.log(`{lat: ${lat}, lng: ${lng}, description: 'test'},`)
     return;
   }
