@@ -10,6 +10,9 @@
             <span>
               {{ selectedLocation.description }}
             </span>
+            <span>
+              <button id="goto-yr-button" @click="goToYr">Yr</button>
+            </span>
           </div>
         </div>
         <div id="middle-map-container">
@@ -20,6 +23,12 @@
               <div class="calendar-day" @click="dayClicked(day.dayjs)"
                 :class="{ 'selected-day': day.dayjs.format(dateWithoutTimeFormat) === selectedDate.format(dateWithoutTimeFormat), 'disabled-day': now.diff(day.dayjs, 'day') > 0 }">
                 {{ day.dayjs.format('dd DD.') }}
+                <div class="day-graph-container">
+                  <canvas class="day-graph day-graph-temperature"></canvas>
+                </div>
+                <div class="day-graph-container">
+                  <canvas class="day-graph day-graph-rain"></canvas>
+                </div>
                 <div v-if="getDailiyData(day.dayjs)">
                   <div class="infront-of-cha">
                     {{ getDailiyData(day.dayjs)?.weightedPercipitationMax.toFixed(0) }} mm
@@ -27,10 +36,6 @@
                   <div class="infront-of-cha">
                     {{ getDailiyData(day.dayjs)?.tempMax.toFixed(0) }}°C
                   </div>
-                </div>
-                <div class="day-graph-container">
-                  <div></div>
-                  <canvas class="day-graph"></canvas>
                 </div>
               </div>
             </div>
@@ -49,7 +54,7 @@ import { manualAxios } from './api/metapi';
 import { iconNameToIcon } from './leaflet.icons'
 import dayjs, { Dayjs } from 'dayjs'
 import weekday from 'dayjs/plugin/weekday'
-import { Chart } from 'chart.js/auto'
+import { Chart, type ChartOptions } from 'chart.js/auto'
 
 const timeOffset = ref(0)
 const selectedDate = ref(dayjs().hour(0).second(0).hour(0))
@@ -87,11 +92,20 @@ type DailyData = {
 }
 
 const dayArray = ref<DailyData[]>([])
-const chartArray: Chart[] = [];
+const lineChartArray: Chart[] = [];
+const barChartArray: Chart[] = [];
 const baseFormat = 'YYYY-MM-DD HH:mm:ss'
 const dateWithoutTimeFormat = 'YYYY-MM-DD'
 const selectedLocation = ref<ManualWeatherSpot>()
 const galdHoPiggenSpot = { lat: 61.63615640427303, lng: 8.312659263610842, description: 'Galdhøpiggen' }
+
+function goToYr(e: MouseEvent){
+  if( !selectedLocation.value) return;
+  const { lat, lng } = selectedLocation.value;
+  const yrUrl = `https://www.yr.no/en/forecast/daily-table/${lat.toFixed(3)},${lng.toFixed(3)}`;
+  location.href = yrUrl;
+  e.preventDefault();
+}
 
 function getDailiyData(day: Dayjs) {
   if (!selectedLocation.value) return null;
@@ -271,49 +285,121 @@ onMounted(async () => {
     }
   }
 
+  const rainBlue = "#134686"
+  const warmColor = "#ED3F27"
+
+  const lineChartOptions: ChartOptions = {
+    scales: {
+      x: { display: false },
+      y: { display: false, max: 30, min: -30 },
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: { enabled: false },
+    },
+    hover: { mode: undefined },
+  }
+
+
+  const lineChartDatasetSettings = {
+    tension: 0.3,
+    pointRadius: 0,
+    borderWidth: 2,
+    segment: {
+      borderColor: (part: any) => {
+        const prevValue = part.p0.parsed.y // start value
+        const nextValue = part.p1.parsed.y // end value
+        return prevValue < 0 || nextValue < 0 ? rainBlue : warmColor // return with a color by rule
+      },
+    }
+  }
+
+  const barChartOptions: ChartOptions = {
+    scales: {
+      x: { display: false },
+      y: { display: false, max: 30, min: 0 },
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: { enabled: false },
+    },
+    hover: { mode: undefined },
+  }
+
+  const barChartDatasetSettings = {
+    tension: 0.3,
+    pointRadius: 0,
+    borderWidth: 2,
+    borderColor: rainBlue,
+    backgroundColor: rainBlue,
+  }
+
   function leafletMarkerClicked(weatherSpot: ManualWeatherSpot) {
     selectedLocation.value = weatherSpot;
-    const dayCanvases = document.querySelectorAll('.day-graph')
+    const lineChartCanvases = document.querySelectorAll('.day-graph-temperature')
+    const barChartCanvases = document.querySelectorAll('.day-graph-rain')
     const dayDayas = selectedLocation.value.weatherData;
     if (!dayDayas) return;
-    let i = 0;
+    let lineChartIndex = 0;
+    let barChartIndex = 0;
     for (let day of dayArray.value) {
-      const canvas = dayCanvases[i] as HTMLCanvasElement;
+      const lineChartCanvas = lineChartCanvases[lineChartIndex] as HTMLCanvasElement;
+      const parentRect = lineChartCanvas.parentElement?.getBoundingClientRect()
+      if (parentRect) {
+        lineChartCanvas.width = parentRect.width;
+        lineChartCanvas.height = parentRect.height;
+      }
       const dailyData = dayDayas.properties.timeseries.filter(t => {
         const hourDiff = dayjs(t.time).diff(day.dayjs, 'hour');
         return hourDiff <= 23 && hourDiff > 0
       })
-      const data = dailyData.map(d => d.data.instant.details?.air_temperature || 0)
-      const labels = new Array(data.length).fill(0).map((_, i) => i);
-      if( chartArray[i] ) chartArray[i].destroy(); 
-      const chart = new Chart(
-        canvas,
+      const tempData = dailyData.map(d => d.data.instant.details?.air_temperature || 0)
+      const labels = new Array(tempData.length).fill(0).map((_, i) => i);
+      if (lineChartArray[lineChartIndex]) lineChartArray[lineChartIndex].destroy();
+      const lineChart = new Chart(
+        lineChartCanvas,
         {
           type: 'line',
           data: {
             labels,
             datasets: [{
-              data,
-              tension: 0.3,
-              pointRadius: 0,
-              borderWidth: 2
-            }]
-          },
-          options: {
-            scales: {
-              x: { display: false },
-              y: { display: false, max: 20, min: -20 },
+              ...lineChartDatasetSettings,
+              data: tempData,
             },
-            plugins: {
-              legend: { display: false},
-              tooltip: { enabled: false},
-            },
-            hover: { mode: undefined },
+            ],
           },
+          options: lineChartOptions
         }
       )
-      chartArray[i] = chart;
-      i++
+      lineChartArray[lineChartIndex] = lineChart;
+      lineChartIndex++
+      /* BAR CHART --- */
+      const barChartCanvas = barChartCanvases[barChartIndex] as HTMLCanvasElement;
+      const barChartCanvasRect = barChartCanvas.parentElement?.getBoundingClientRect()
+      if (barChartCanvasRect) {
+        barChartCanvas.width = barChartCanvasRect.width;
+        barChartCanvas.height = barChartCanvasRect.height;
+      }
+
+      if (barChartArray[barChartIndex]) barChartArray[barChartIndex].destroy();
+      const rainData = dailyData.map(d => d.data.next_1_hours?.details.precipitation_amount_max || d.data.next_6_hours?.details.precipitation_amount_max || d.data.next_12_hours?.details.precipitation_amount_max || 0)
+      const barChart = new Chart(
+        barChartCanvas,
+        {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{
+              ...barChartDatasetSettings,
+              data: rainData,
+            },
+            ],
+          },
+          options: barChartOptions
+        }
+      )
+      barChartArray[barChartIndex] = barChart;
+      barChartIndex++
     }
   }
 
@@ -324,7 +410,7 @@ onMounted(async () => {
   async function onMapClicked(e: any) {
     const lat = e.latlng.lat
     const lng = e.latlng.lng
-    console.log(`{lat: ${lat}, lng: ${lng}, description: 'test'},`)
+    // console.log(`{lat: ${lat}, lng: ${lng}, description: 'test'},`)
     return;
   }
 
@@ -350,6 +436,10 @@ onMounted(async () => {
   color: black;
 }
 
+#goto-yr-button{
+  pointer-events: all;
+}
+
 #top-map-container {
   display: grid;
   grid-template-rows: 75px 1fr;
@@ -359,7 +449,7 @@ onMounted(async () => {
   pointer-events: none;
 }
 
-#bottom-map-container{
+#bottom-map-container {
   margin: 5px;
 }
 
@@ -407,7 +497,7 @@ onMounted(async () => {
 
 .day-graph-container {
   display: grid;
-  grid-template-rows: 1fr 1fr;
+  grid-template-rows: 1fr;
   position: absolute;
   width: 100%;
   height: 100%;
@@ -415,11 +505,21 @@ onMounted(async () => {
   left: 0;
 }
 
+.day-graph-temperature {
+  z-index: 4;
+}
+
+.day-graph-rain {
+  z-index: 3;
+}
+
 .day-graph {
   width: 100%;
+  height: 100%;
   z-index: 5;
 }
-.infront-of-chart{  
+
+.infront-of-chart {
   z-index: 10;
 }
 </style>
