@@ -10,9 +10,6 @@
             <span>
               {{ selectedLocation.description }}
             </span>
-            <span>
-              <button id="goto-yr-button" @click="goToYr">Yr</button>
-            </span>
           </div>
         </div>
         <div id="middle-map-container">
@@ -42,6 +39,12 @@
           </div>
         </div>
       </div>
+        <img id="goto-yr-button" 
+          @click="goToYr" 
+          src="https://info.nrk.no/wp-content/uploads/2019/09/YR_blaa_rgb.png" 
+          style="aspect-ratio: 1; height: 25px; margin-left: 15px;"
+          v-show="selectedLocation"
+        ></img>
     </div>
   </div>
 </template>
@@ -438,6 +441,11 @@ onMounted(async () => {
 
 #goto-yr-button{
   pointer-events: all;
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 5000;
+  margin: 7px;
 }
 
 #top-map-container {
