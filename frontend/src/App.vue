@@ -407,7 +407,7 @@ onMounted(async () => {
   const tileAttribution = '&copy; <a href="http://www.kartverket.no/">Kartverket</a>'
   L.tileLayer(tileLayer, { attribution: tileAttribution }).addTo(map);
 
-  async function onMapClicked(e: any) {
+  async function onMapClicked() {
     // const lat = e.latlng.lat
     // const lng = e.latlng.lng
     // console.log(`{lat: ${lat}, lng: ${lng}, description: 'test'},`)
