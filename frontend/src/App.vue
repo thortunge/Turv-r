@@ -27,10 +27,10 @@
                   <canvas class="day-graph day-graph-rain"></canvas>
                 </div>
                 <div v-if="getDailiyData(day.dayjs)">
-                  <div class="infront-of-cha">
+                  <div class="infront-of-chart">
                     {{ getDailiyData(day.dayjs)?.weightedPercipitationMax.toFixed(0) }} mm
                   </div>
-                  <div class="infront-of-cha">
+                  <div class="infront-of-chart">
                     {{ getDailiyData(day.dayjs)?.tempMax.toFixed(0) }}°C
                   </div>
                 </div>
@@ -39,12 +39,8 @@
           </div>
         </div>
       </div>
-        <img id="goto-yr-button" 
-          @click="goToYr" 
-          src="https://info.nrk.no/wp-content/uploads/2019/09/YR_blaa_rgb.png" 
-          style="aspect-ratio: 1; height: 25px; margin-left: 15px;"
-          v-show="selectedLocation"
-        ></img>
+      <img id="goto-yr-button" @click="goToYr" src="https://info.nrk.no/wp-content/uploads/2019/09/YR_blaa_rgb.png"
+        style="aspect-ratio: 1; height: 25px; margin-left: 15px;" v-show="selectedLocation"></img>
     </div>
   </div>
 </template>
@@ -78,6 +74,7 @@ type DailyWeatherData = {
   windMax: number;
   tempMin: number;
   tempMax: number;
+  score: number;
 }
 
 type ManualWeatherSpot = {
@@ -99,11 +96,11 @@ const lineChartArray: Chart[] = [];
 const barChartArray: Chart[] = [];
 const baseFormat = 'YYYY-MM-DD HH:mm:ss'
 const dateWithoutTimeFormat = 'YYYY-MM-DD'
-const selectedLocation = ref<ManualWeatherSpot>()
 const galdHoPiggenSpot = { lat: 61.63615640427303, lng: 8.312659263610842, description: 'Galdhøpiggen' }
+const selectedLocation = ref<ManualWeatherSpot>()
 
-function goToYr(e: MouseEvent){
-  if( !selectedLocation.value) return;
+function goToYr(e: MouseEvent) {
+  if (!selectedLocation.value) return;
   const { lat, lng } = selectedLocation.value;
   const yrUrl = `https://www.yr.no/en/forecast/daily-table/${lat.toFixed(3)},${lng.toFixed(3)}`;
   location.href = yrUrl;
@@ -116,24 +113,24 @@ function getDailiyData(day: Dayjs) {
 }
 
 const weatherSpots: ManualWeatherSpot[] = [
-  { lat: 63.321932906960214, lng: 10.453491210937502, description: 'Trondheim' },
   galdHoPiggenSpot,
-  { lat: 63.00949691316362, lng: 12.16461181640625, description: 'Sylan' },
-  { lat: 63.180700123710835, lng: 8.043365478515627, description: 'Tustna' },
-  { lat: 61.878650307660216, lng: 9.797744750976564, description: 'Rondvassbu' },
-  { lat: 63.295099351960275, lng: 11.357116699218752, description: 'Skarvan' },
-  { lat: 63.91096303368066, lng: 12.219543457031252, description: 'Skjækerdalen' },
-  { lat: 62.7212290027944, lng: 8.770523071289064, description: 'Innerdalen' },
-  { lat: 62.82960242165454, lng: 9.240875244140627, description: 'Trollheimen' },
-  { lat: 62.182809781895564, lng: 11.87347412109375, description: 'Femunden' },
-  { lat: 63.290933283834896, lng: 9.078140258789064, description: 'Kyrksæterøra' },
-  { lat: 62.64733879716517, lng: 10.741882324218752, description: 'Forollhogna' },
-  { lat: 63.85005121783326, lng: 10.331268310546877, description: 'Fosen' },
-  { lat: 64.00757580077239, lng: 10.62652587890625, description: 'Fosen Nord' },
-  { lat: 62.363626830043756, lng: 9.096679687500002, description: 'Dovrefjell' },
-  { lat: 62.418995772457635, lng: 10.022277832031252, description: 'Oppdal øst' },
-  { lat: 63.41027571353263, lng: 11.852874755859377, description: 'Meråker' },
-  { lat: 62.19562404557709, lng: 10.777587890625002, description: 'Tynset' },
+  // { lat: 63.321932906960214, lng: 10.453491210937502, description: 'Trondheim' },
+  // { lat: 63.00949691316362, lng: 12.16461181640625, description: 'Sylan' },
+  // { lat: 63.180700123710835, lng: 8.043365478515627, description: 'Tustna' },
+  // { lat: 61.878650307660216, lng: 9.797744750976564, description: 'Rondvassbu' },
+  // { lat: 63.295099351960275, lng: 11.357116699218752, description: 'Skarvan' },
+  // { lat: 63.91096303368066, lng: 12.219543457031252, description: 'Skjækerdalen' },
+  // { lat: 62.7212290027944, lng: 8.770523071289064, description: 'Innerdalen' },
+  // { lat: 62.82960242165454, lng: 9.240875244140627, description: 'Trollheimen' },
+  // { lat: 62.182809781895564, lng: 11.87347412109375, description: 'Femunden' },
+  // { lat: 63.290933283834896, lng: 9.078140258789064, description: 'Kyrksæterøra' },
+  // { lat: 62.64733879716517, lng: 10.741882324218752, description: 'Forollhogna' },
+  // { lat: 63.85005121783326, lng: 10.331268310546877, description: 'Fosen' },
+  // { lat: 64.00757580077239, lng: 10.62652587890625, description: 'Fosen Nord' },
+  // { lat: 62.363626830043756, lng: 9.096679687500002, description: 'Dovrefjell' },
+  // { lat: 62.418995772457635, lng: 10.022277832031252, description: 'Oppdal øst' },
+  // { lat: 63.41027571353263, lng: 11.852874755859377, description: 'Meråker' },
+  // { lat: 62.19562404557709, lng: 10.777587890625002, description: 'Tynset' },
 ]
 
 watch(searchDate, recalculateMarkers)
@@ -188,7 +185,6 @@ async function setUserPosition(): Promise<LatLngExpression | undefined> {
   });
 }
 
-
 function populateDayArray() {
   dayjs.extend(weekday)
   const now = dayjs();
@@ -210,6 +206,238 @@ type ProtoGuy = {
   tempMax: number;
 }
 
+function findGoodWeather() {
+  for (const weatherSpot of weatherSpots) {
+    const weatherDataDict: { [key: string]: ProtoGuy } = {}
+    const { weatherData } = weatherSpot
+    if (!weatherData || !weatherData.properties) continue;
+    for (const d of weatherData.properties.timeseries) {
+      const t = dayjs(d.time).add(-2, 'hour');
+      const key = t.format(dateWithoutTimeFormat)
+      if (!weatherDataDict[key]) weatherDataDict[key] = {
+        percipitationMax: 0,
+        percipitationMin: 0,
+        weightedPercipitationMax: 0,
+        weightedPercipitationMin: 0,
+        wind: -99999,
+        windMax: -99999,
+        tempMin: 99999,
+        tempMax: -99999
+      }
+      const rainMin = d.data.next_1_hours?.details.precipitation_amount_min || 0
+      const rainMax = d.data.next_1_hours?.details.precipitation_amount_max || 0
+      const rainProb = (d.data.next_1_hours?.details.probability_of_precipitation || 1)
+      weatherDataDict[key].percipitationMin += rainMin
+      weatherDataDict[key].percipitationMax += rainMax
+      weatherDataDict[key].weightedPercipitationMin += rainProb * rainMin
+      weatherDataDict[key].weightedPercipitationMax += rainProb * rainMax
+      const wind = d.data.instant.details?.wind_speed || null;
+      if (wind !== null) {
+        weatherDataDict[key].wind = Math.min(weatherDataDict[key].wind, wind);
+        weatherDataDict[key].windMax = Math.max(weatherDataDict[key].windMax, wind);
+      }
+      const temperature = d.data.instant.details?.air_temperature || null;
+      if (temperature !== null) {
+        weatherDataDict[key].tempMin = Math.min(weatherDataDict[key].tempMin, temperature);
+        weatherDataDict[key].tempMax = Math.max(weatherDataDict[key].tempMax, temperature);
+      }
+    }
+    weatherSpot.dailyWeatherData = []
+    for (const key of Object.keys(weatherDataDict)) {
+      const keyData = weatherDataDict[key]
+      const newData = {
+        percipitationMax: keyData.percipitationMax,
+        percipitationMin: keyData.percipitationMin,
+        dateString: key,
+        weightedPercipitationMin: keyData.percipitationMin,
+        weightedPercipitationMax: keyData.percipitationMax,
+        wind: keyData.wind,
+        windMax: keyData.windMax,
+        tempMin: keyData.tempMin,
+        tempMax: keyData.tempMax,
+        score: 0
+      }
+      newData.score = scoreData(newData)
+      weatherSpot.dailyWeatherData.push(newData)
+    }
+  }
+}
+
+
+async function loadWeatherData() {
+  for (const weatherSpot of weatherSpots) {
+    const response = await manualAxios.get<METJSONForecast>(`complete?lat=${weatherSpot.lat}&lon=${weatherSpot.lng}`)
+    const weatherData = response.data;
+    weatherSpot.weatherData = weatherData;
+    const symbolName = weatherData.properties.timeseries[0].data.next_1_hours?.summary.symbol_code
+    if (!symbolName) return;
+    const icon = iconNameToIcon[symbolName]
+    if (icon) {
+      weatherSpot.leafletMarker = L.marker([weatherSpot.lat, weatherSpot.lng], { icon }).addTo(map);
+      weatherSpot.leafletMarker.addEventListener('click', _ => leafletMarkerClicked(weatherSpot))
+    }
+  }
+}
+
+
+const rainBlue = "#134686"
+const warmColor = "#ED3F27"
+
+const lineChartOptions: ChartOptions = {
+  scales: {
+    x: { display: false },
+    y: { display: false, max: 30, min: -30 },
+  },
+  plugins: {
+    legend: { display: false },
+    tooltip: { enabled: false },
+  },
+  hover: { mode: undefined },
+}
+
+
+const lineChartDatasetSettings = {
+  tension: 0.3,
+  pointRadius: 0,
+  borderWidth: 2,
+  segment: {
+    borderColor: (part: any) => {
+      const prevValue = part.p0.parsed.y // start value
+      const nextValue = part.p1.parsed.y // end value
+      return prevValue < 0 || nextValue < 0 ? rainBlue : warmColor // return with a color by rule
+    },
+  }
+}
+
+const barChartOptions: ChartOptions = {
+  scales: {
+    x: { display: false },
+    y: { display: false, max: 30, min: 0 },
+  },
+  plugins: {
+    legend: { display: false },
+    tooltip: { enabled: false },
+  },
+  hover: { mode: undefined },
+}
+
+const barChartDatasetSettings = {
+  tension: 0.3,
+  pointRadius: 0,
+  borderWidth: 2,
+  borderColor: rainBlue,
+  backgroundColor: rainBlue,
+}
+
+
+function leafletMarkerClicked(weatherSpot: ManualWeatherSpot) {
+  selectedLocation.value = weatherSpot;
+  const lineChartCanvases = document.querySelectorAll('.day-graph-temperature')
+  const barChartCanvases = document.querySelectorAll('.day-graph-rain')
+  const dayDayas = selectedLocation.value.weatherData;
+  if (!dayDayas) return;
+  let lineChartIndex = 0;
+  let barChartIndex = 0;
+  for (let day of dayArray.value) {
+    const lineChartCanvas = lineChartCanvases[lineChartIndex] as HTMLCanvasElement;
+    const parentRect = lineChartCanvas.parentElement?.getBoundingClientRect()
+    if (parentRect) {
+      lineChartCanvas.width = parentRect.width;
+      lineChartCanvas.height = parentRect.height;
+    }
+    const dailyData = dayDayas.properties.timeseries.filter(t => {
+      const hourDiff = dayjs(t.time).diff(day.dayjs, 'hour');
+      return hourDiff <= 23 && hourDiff > 0
+    })
+    const tempData = dailyData.map(d => d.data.instant.details?.air_temperature || 0)
+    const labels = new Array(tempData.length).fill(0).map((_, i) => i);
+    if (lineChartArray[lineChartIndex]) lineChartArray[lineChartIndex].destroy();
+    const lineChart = new Chart(
+      lineChartCanvas,
+      {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            ...lineChartDatasetSettings,
+            data: tempData,
+          },
+          ],
+        },
+        options: lineChartOptions
+      }
+    )
+    lineChartArray[lineChartIndex] = lineChart;
+    lineChartIndex++
+    /* BAR CHART --- */
+    const barChartCanvas = barChartCanvases[barChartIndex] as HTMLCanvasElement;
+    const barChartCanvasRect = barChartCanvas.parentElement?.getBoundingClientRect()
+    if (barChartCanvasRect) {
+      barChartCanvas.width = barChartCanvasRect.width;
+      barChartCanvas.height = barChartCanvasRect.height;
+    }
+
+    if (barChartArray[barChartIndex]) barChartArray[barChartIndex].destroy();
+    const rainData = dailyData.map(d => d.data.next_1_hours?.details.precipitation_amount_max || d.data.next_6_hours?.details.precipitation_amount_max || d.data.next_12_hours?.details.precipitation_amount_max || 0)
+    const barChart = new Chart(
+      barChartCanvas,
+      {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            ...barChartDatasetSettings,
+            data: rainData,
+          },
+          ],
+        },
+        options: barChartOptions
+      }
+    )
+    barChartArray[barChartIndex] = barChart;
+    barChartIndex++
+  }
+}
+
+function scoreData(d: DailyWeatherData): number{
+  let s = 0;
+  if(d.percipitationMin <= 2) s += 1;
+  s += d.tempMax / 10;
+  return s;
+}
+
+function notifyGoodWeather(){
+  for(let t of weatherSpots){
+    if(!t.dailyWeatherData) continue;
+    const weekends: DailyWeatherData[][] = []
+    let runningWeekend: DailyWeatherData[] = []
+    for(const dayilyData of t.dailyWeatherData){
+      if(isHelg_(dayilyData)){
+        runningWeekend.push(dayilyData)
+      }else{
+        if( runningWeekend.length > 0 ) weekends.push(runningWeekend)
+        runningWeekend = []
+      }
+    }
+    console.log(t.description)
+    for(const weekend of weekends){
+      let rainMax = Math.max.apply(Math, weekend.map(w => w.percipitationMax));
+      let rainMin = Math.min.apply(Math, weekend.map(w => w.percipitationMin));
+      let tempMax = Math.max.apply(Math, weekend.map(w => w.tempMax));
+      let tempMin = Math.min.apply(Math, weekend.map(w => w.tempMin));
+      console.log(`Friday ${weekend[0].dateString} -- ${tempMax}/${tempMin} : ${rainMax}/${rainMin}`)
+    }
+  }
+}
+
+function isHelg(day: Dayjs): boolean{
+  return [5,6,0].includes(day.day()) 
+}
+
+function isHelg_(d: DailyWeatherData){
+  return isHelg(dayjs(d.dateString))
+}
+
 onMounted(async () => {
   map = L.map('map')
   map.setView([galdHoPiggenSpot.lat, galdHoPiggenSpot.lng], 7);
@@ -217,195 +445,7 @@ onMounted(async () => {
   populateDayArray()
   await loadWeatherData();
   findGoodWeather();
-
-  function findGoodWeather() {
-    for (const weatherSpot of weatherSpots) {
-      const weatherDataDict: { [key: string]: ProtoGuy } = {}
-      const { weatherData } = weatherSpot
-      if (!weatherData || !weatherData.properties) continue;
-      for (const d of weatherData.properties.timeseries) {
-        const t = dayjs(d.time).add(-2, 'hour');
-        const key = t.format(dateWithoutTimeFormat)
-        if (!weatherDataDict[key]) weatherDataDict[key] = {
-          percipitationMax: 0,
-          percipitationMin: 0,
-          weightedPercipitationMax: 0,
-          weightedPercipitationMin: 0,
-          wind: 0,
-          windMax: 0,
-          tempMin: 0,
-          tempMax: 0
-        }
-        const rainMin = d.data.next_1_hours?.details.precipitation_amount_min || 0
-        const rainMax = d.data.next_1_hours?.details.precipitation_amount_max || 0
-        const rainProb = (d.data.next_1_hours?.details.probability_of_precipitation || 1)
-        weatherDataDict[key].percipitationMin += rainMin
-        weatherDataDict[key].percipitationMax += rainMax
-        weatherDataDict[key].weightedPercipitationMin += rainProb * rainMin
-        weatherDataDict[key].weightedPercipitationMax += rainProb * rainMax
-        const wind = d.data.instant.details?.wind_speed || null;
-        if (wind !== null) {
-          weatherDataDict[key].wind = Math.min(weatherDataDict[key].wind, wind);
-          weatherDataDict[key].windMax = Math.max(weatherDataDict[key].windMax, wind);
-        }
-        const temperature = d.data.instant.details?.wind_speed || null;
-        if (temperature !== null) {
-          weatherDataDict[key].tempMin = Math.min(weatherDataDict[key].tempMin, temperature);
-          weatherDataDict[key].tempMax = Math.max(weatherDataDict[key].tempMax, temperature);
-        }
-
-      }
-      weatherSpot.dailyWeatherData = []
-      for (const key of Object.keys(weatherDataDict)) {
-        const keyData = weatherDataDict[key]
-        weatherSpot.dailyWeatherData.push({
-          percipitationMax: keyData.percipitationMax,
-          percipitationMin: keyData.percipitationMin,
-          dateString: key,
-          weightedPercipitationMin: keyData.percipitationMin,
-          weightedPercipitationMax: keyData.percipitationMax,
-          wind: keyData.wind,
-          windMax: keyData.windMax,
-          tempMin: keyData.tempMin,
-          tempMax: keyData.tempMax
-        })
-      }
-    }
-  }
-
-  async function loadWeatherData() {
-    for (const weatherSpot of weatherSpots) {
-      const response = await manualAxios.get<METJSONForecast>(`complete?lat=${weatherSpot.lat}&lon=${weatherSpot.lng}`)
-      const weatherData = response.data;
-      weatherSpot.weatherData = weatherData;
-      const symbolName = weatherData.properties.timeseries[0].data.next_1_hours?.summary.symbol_code
-      if (!symbolName) return;
-      const icon = iconNameToIcon[symbolName]
-      if (icon) {
-        weatherSpot.leafletMarker = L.marker([weatherSpot.lat, weatherSpot.lng], { icon }).addTo(map);
-        weatherSpot.leafletMarker.addEventListener('click', _ => leafletMarkerClicked(weatherSpot))
-      }
-    }
-  }
-
-  const rainBlue = "#134686"
-  const warmColor = "#ED3F27"
-
-  const lineChartOptions: ChartOptions = {
-    scales: {
-      x: { display: false },
-      y: { display: false, max: 30, min: -30 },
-    },
-    plugins: {
-      legend: { display: false },
-      tooltip: { enabled: false },
-    },
-    hover: { mode: undefined },
-  }
-
-
-  const lineChartDatasetSettings = {
-    tension: 0.3,
-    pointRadius: 0,
-    borderWidth: 2,
-    segment: {
-      borderColor: (part: any) => {
-        const prevValue = part.p0.parsed.y // start value
-        const nextValue = part.p1.parsed.y // end value
-        return prevValue < 0 || nextValue < 0 ? rainBlue : warmColor // return with a color by rule
-      },
-    }
-  }
-
-  const barChartOptions: ChartOptions = {
-    scales: {
-      x: { display: false },
-      y: { display: false, max: 30, min: 0 },
-    },
-    plugins: {
-      legend: { display: false },
-      tooltip: { enabled: false },
-    },
-    hover: { mode: undefined },
-  }
-
-  const barChartDatasetSettings = {
-    tension: 0.3,
-    pointRadius: 0,
-    borderWidth: 2,
-    borderColor: rainBlue,
-    backgroundColor: rainBlue,
-  }
-
-  function leafletMarkerClicked(weatherSpot: ManualWeatherSpot) {
-    selectedLocation.value = weatherSpot;
-    const lineChartCanvases = document.querySelectorAll('.day-graph-temperature')
-    const barChartCanvases = document.querySelectorAll('.day-graph-rain')
-    const dayDayas = selectedLocation.value.weatherData;
-    if (!dayDayas) return;
-    let lineChartIndex = 0;
-    let barChartIndex = 0;
-    for (let day of dayArray.value) {
-      const lineChartCanvas = lineChartCanvases[lineChartIndex] as HTMLCanvasElement;
-      const parentRect = lineChartCanvas.parentElement?.getBoundingClientRect()
-      if (parentRect) {
-        lineChartCanvas.width = parentRect.width;
-        lineChartCanvas.height = parentRect.height;
-      }
-      const dailyData = dayDayas.properties.timeseries.filter(t => {
-        const hourDiff = dayjs(t.time).diff(day.dayjs, 'hour');
-        return hourDiff <= 23 && hourDiff > 0
-      })
-      const tempData = dailyData.map(d => d.data.instant.details?.air_temperature || 0)
-      const labels = new Array(tempData.length).fill(0).map((_, i) => i);
-      if (lineChartArray[lineChartIndex]) lineChartArray[lineChartIndex].destroy();
-      const lineChart = new Chart(
-        lineChartCanvas,
-        {
-          type: 'line',
-          data: {
-            labels,
-            datasets: [{
-              ...lineChartDatasetSettings,
-              data: tempData,
-            },
-            ],
-          },
-          options: lineChartOptions
-        }
-      )
-      lineChartArray[lineChartIndex] = lineChart;
-      lineChartIndex++
-      /* BAR CHART --- */
-      const barChartCanvas = barChartCanvases[barChartIndex] as HTMLCanvasElement;
-      const barChartCanvasRect = barChartCanvas.parentElement?.getBoundingClientRect()
-      if (barChartCanvasRect) {
-        barChartCanvas.width = barChartCanvasRect.width;
-        barChartCanvas.height = barChartCanvasRect.height;
-      }
-
-      if (barChartArray[barChartIndex]) barChartArray[barChartIndex].destroy();
-      const rainData = dailyData.map(d => d.data.next_1_hours?.details.precipitation_amount_max || d.data.next_6_hours?.details.precipitation_amount_max || d.data.next_12_hours?.details.precipitation_amount_max || 0)
-      const barChart = new Chart(
-        barChartCanvas,
-        {
-          type: 'bar',
-          data: {
-            labels,
-            datasets: [{
-              ...barChartDatasetSettings,
-              data: rainData,
-            },
-            ],
-          },
-          options: barChartOptions
-        }
-      )
-      barChartArray[barChartIndex] = barChart;
-      barChartIndex++
-    }
-  }
-
+  notifyGoodWeather();
   const tileLayer = 'https://cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/{z}/{y}/{x}.png'
   const tileAttribution = '&copy; <a href="http://www.kartverket.no/">Kartverket</a>'
   L.tileLayer(tileLayer, { attribution: tileAttribution }).addTo(map);
@@ -439,13 +479,14 @@ onMounted(async () => {
   color: black;
 }
 
-#goto-yr-button{
+#goto-yr-button {
   pointer-events: all;
   position: absolute;
   top: 0;
   right: 0;
   z-index: 5000;
   margin: 7px;
+  cursor: pointer;
 }
 
 #top-map-container {
