@@ -305,7 +305,8 @@ function weekendSuggestionClicked(thing: WeekendData) {
   map.setView({
     lat: selectedLocation.value.lat,
     lng: selectedLocation.value.lng
-  }, 7)
+  })
+  displaySuggestions.value = false;
 }
 
 async function loadWeatherData() {
