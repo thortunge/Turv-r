@@ -620,6 +620,7 @@ onMounted(async () => {
   border-radius: 5px;
   box-shadow: 5px 3px 10px rgb(184, 184, 184);
   pointer-events: all;
+  max-width: 400px;
 }
 
 .image-inline-text {
