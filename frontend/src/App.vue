@@ -6,13 +6,56 @@
     <div id="map">
       <div id="map-overlay-container">
         <div id="top-map-container">
-          <div v-if="selectedLocation" id="location-header-name">
-            <span>
-              {{ selectedLocation.description }}
-            </span>
+          <div></div>
+          <div>
+            <div id="location-header-name">
+              <span v-if="selectedLocation">
+                {{ selectedLocation.description }}
+              </span>
+            </div>
+          </div>
+          <div id="top-right-container-top">
+            <div>
+              <img :src="notificationImage" style="aspect-ratio: 1; height: 25px; margin-left: 15px; pointer-events: all;" @click="toggleSuggestions">
+              </img>
+            </div>
+            <div>
+              <img id="goto-yr-button" @click="goToYr"
+                src="https://info.nrk.no/wp-content/uploads/2019/09/YR_blaa_rgb.png"
+                style="aspect-ratio: 1; height: 25px; margin-left: 15px;" v-show="selectedLocation">
+              </img>
+            </div>
           </div>
         </div>
-        <div id="middle-map-container">
+        <div id="middle-map-container" @click="() => { }">
+          <div id="trip-suggestion-container" v-if="displaySuggestions">
+            <div v-for="(thing, i) in suggestions" :key="thing.weatherSpot.description + i"
+              class="single-trip-suggestion-container">
+              <div class="trip-suggestion-weather-data-row" @click="weekendSuggestionClicked(thing)">
+                <div>
+                  <span>
+                    <img class="image-inline-text" style="margin-right: .5em; transform: translateY(2px)"
+                      :src="thermometerImage" />
+                  </span>
+                  <span>
+                    <TempDisplay :val="thing.tempMax" />
+                    /
+                    <TempDisplay :val="thing.tempMin" />
+                  </span>
+                </div>
+                <div>
+                  {{ thing.weatherSpot.description }}
+                </div>
+                <div>
+                  <img class="image-inline-text" style="margin-right: .5em; transform: translateY(1px)"
+                    :src="rainIconUrl" />
+                  <span>
+                    {{ thing.rainMax }}/{{ thing.rainMin }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         <div id="bottom-map-container">
           <div id="calendar-container">
@@ -39,8 +82,6 @@
           </div>
         </div>
       </div>
-      <img id="goto-yr-button" @click="goToYr" src="https://info.nrk.no/wp-content/uploads/2019/09/YR_blaa_rgb.png"
-        style="aspect-ratio: 1; height: 25px; margin-left: 15px;" v-show="selectedLocation"></img>
     </div>
   </div>
 </template>
@@ -50,46 +91,31 @@ import L, { type LatLngExpression } from 'leaflet'
 import { computed, onMounted, ref, watch } from 'vue'
 import { type METJSONForecast } from './api/gen/met';
 import { manualAxios } from './api/metapi';
-import { iconNameToIcon } from './leaflet.icons'
+import { baseUrl, iconNameToIcon, yrNameToIcon } from './leaflet.icons'
 import dayjs, { Dayjs } from 'dayjs'
 import weekday from 'dayjs/plugin/weekday'
 import { Chart, type ChartOptions } from 'chart.js/auto'
+import type { DailyData, DailyWeatherData, ManualWeatherSpot } from './things';
+import { rainBlue, warmColor, WeekendData } from './things';
+import TempDisplay from './components/TempDisplay.vue';
+import thermometerImage from './assets/device_thermostat_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png'
+import notificationImage from './assets/notifications_24dp_1F1F1F_FILL0_wght400_GRAD0_opsz24.png'
 
 const timeOffset = ref(0)
 const selectedDate = ref(dayjs().hour(0).second(0).hour(0))
+const rainWeight = ref(1)
+const temperatureWeight = ref(0.3)
+const rainThreshold = ref(4)
+const rainThresholdScore = ref(2)
+const thingsAndThangs = ref<WeekendData[]>([])
 const now = ref<Dayjs>(dayjs())
 const searchDate = computed<Dayjs>(() => {
   return selectedDate.value.add(timeOffset.value, 'hour')
 })
 
+const rainIconUrl = baseUrl + yrNameToIcon.rain;
+
 let map: L.Map;
-
-type DailyWeatherData = {
-  dateString: string;
-  percipitationMin: number;
-  percipitationMax: number;
-  weightedPercipitationMin: number;
-  weightedPercipitationMax: number;
-  wind: number;
-  windMax: number;
-  tempMin: number;
-  tempMax: number;
-  score: number;
-}
-
-type ManualWeatherSpot = {
-  lat: number;
-  lng: number;
-  description: string;
-  weatherData?: METJSONForecast;
-  leafletMarker?: L.Marker<any>;
-  dailyWeatherData?: DailyWeatherData[];
-}
-
-type DailyData = {
-  dayjs: Dayjs;
-  dailyWeatherData?: DailyWeatherData;
-}
 
 const dayArray = ref<DailyData[]>([])
 const lineChartArray: Chart[] = [];
@@ -98,6 +124,11 @@ const baseFormat = 'YYYY-MM-DD HH:mm:ss'
 const dateWithoutTimeFormat = 'YYYY-MM-DD'
 const galdHoPiggenSpot = { lat: 61.63615640427303, lng: 8.312659263610842, description: 'Galdhøpiggen' }
 const selectedLocation = ref<ManualWeatherSpot>()
+const displaySuggestions = ref(false)
+
+const suggestions = computed<any>(() => {
+  return thingsAndThangs.value.slice(0, 5)
+})
 
 function goToYr(e: MouseEvent) {
   if (!selectedLocation.value) return;
@@ -107,6 +138,11 @@ function goToYr(e: MouseEvent) {
   e.preventDefault();
 }
 
+function toggleSuggestions(){
+  console.log("Hello??")
+  displaySuggestions.value = !displaySuggestions.value;
+}
+
 function getDailiyData(day: Dayjs) {
   if (!selectedLocation.value) return null;
   return selectedLocation.value.dailyWeatherData?.find(e => e.dateString === day.format(dateWithoutTimeFormat))
@@ -114,23 +150,23 @@ function getDailiyData(day: Dayjs) {
 
 const weatherSpots: ManualWeatherSpot[] = [
   galdHoPiggenSpot,
-  // { lat: 63.321932906960214, lng: 10.453491210937502, description: 'Trondheim' },
-  // { lat: 63.00949691316362, lng: 12.16461181640625, description: 'Sylan' },
-  // { lat: 63.180700123710835, lng: 8.043365478515627, description: 'Tustna' },
-  // { lat: 61.878650307660216, lng: 9.797744750976564, description: 'Rondvassbu' },
-  // { lat: 63.295099351960275, lng: 11.357116699218752, description: 'Skarvan' },
-  // { lat: 63.91096303368066, lng: 12.219543457031252, description: 'Skjækerdalen' },
-  // { lat: 62.7212290027944, lng: 8.770523071289064, description: 'Innerdalen' },
-  // { lat: 62.82960242165454, lng: 9.240875244140627, description: 'Trollheimen' },
-  // { lat: 62.182809781895564, lng: 11.87347412109375, description: 'Femunden' },
-  // { lat: 63.290933283834896, lng: 9.078140258789064, description: 'Kyrksæterøra' },
-  // { lat: 62.64733879716517, lng: 10.741882324218752, description: 'Forollhogna' },
-  // { lat: 63.85005121783326, lng: 10.331268310546877, description: 'Fosen' },
-  // { lat: 64.00757580077239, lng: 10.62652587890625, description: 'Fosen Nord' },
-  // { lat: 62.363626830043756, lng: 9.096679687500002, description: 'Dovrefjell' },
-  // { lat: 62.418995772457635, lng: 10.022277832031252, description: 'Oppdal øst' },
-  // { lat: 63.41027571353263, lng: 11.852874755859377, description: 'Meråker' },
-  // { lat: 62.19562404557709, lng: 10.777587890625002, description: 'Tynset' },
+  { lat: 63.321932906960214, lng: 10.453491210937502, description: 'Trondheim' },
+  { lat: 63.00949691316362, lng: 12.16461181640625, description: 'Sylan' },
+  { lat: 63.180700123710835, lng: 8.043365478515627, description: 'Tustna' },
+  { lat: 61.878650307660216, lng: 9.797744750976564, description: 'Rondvassbu' },
+  { lat: 63.295099351960275, lng: 11.357116699218752, description: 'Skarvan' },
+  { lat: 63.91096303368066, lng: 12.219543457031252, description: 'Skjækerdalen' },
+  { lat: 62.7212290027944, lng: 8.770523071289064, description: 'Innerdalen' },
+  { lat: 62.82960242165454, lng: 9.240875244140627, description: 'Trollheimen' },
+  { lat: 62.182809781895564, lng: 11.87347412109375, description: 'Femunden' },
+  { lat: 63.290933283834896, lng: 9.078140258789064, description: 'Kyrksæterøra' },
+  { lat: 62.64733879716517, lng: 10.741882324218752, description: 'Forollhogna' },
+  { lat: 63.85005121783326, lng: 10.331268310546877, description: 'Fosen' },
+  { lat: 64.00757580077239, lng: 10.62652587890625, description: 'Fosen Nord' },
+  { lat: 62.363626830043756, lng: 9.096679687500002, description: 'Dovrefjell' },
+  { lat: 62.418995772457635, lng: 10.022277832031252, description: 'Oppdal øst' },
+  { lat: 63.41027571353263, lng: 11.852874755859377, description: 'Meråker' },
+  { lat: 62.19562404557709, lng: 10.777587890625002, description: 'Tynset' },
 ]
 
 watch(searchDate, recalculateMarkers)
@@ -263,6 +299,14 @@ function findGoodWeather() {
   }
 }
 
+function weekendSuggestionClicked(thing: WeekendData) {
+  selectedDate.value = dayjs(thing.days[0].dateString)
+  selectedLocation.value = thing.weatherSpot
+  map.setView({
+    lat: selectedLocation.value.lat,
+    lng: selectedLocation.value.lng
+  }, 7)
+}
 
 async function loadWeatherData() {
   for (const weatherSpot of weatherSpots) {
@@ -278,10 +322,6 @@ async function loadWeatherData() {
     }
   }
 }
-
-
-const rainBlue = "#134686"
-const warmColor = "#ED3F27"
 
 const lineChartOptions: ChartOptions = {
   scales: {
@@ -399,42 +439,40 @@ function leafletMarkerClicked(weatherSpot: ManualWeatherSpot) {
   }
 }
 
-function scoreData(d: DailyWeatherData): number{
+function scoreData(d: DailyWeatherData): number {
   let s = 0;
-  if(d.percipitationMin <= 2) s += 1;
-  s += d.tempMax / 10;
+  if (d.percipitationMin <= rainThreshold.value) s += rainThresholdScore.value;
+  s -= d.percipitationMax * rainWeight.value;
+  s += d.tempMax * temperatureWeight.value;
   return s;
 }
 
-function notifyGoodWeather(){
-  for(let t of weatherSpots){
-    if(!t.dailyWeatherData) continue;
+function notifyGoodWeather() {
+  const weekendData: WeekendData[] = [];
+  for (let t of weatherSpots) {
+    if (!t.dailyWeatherData) continue;
     const weekends: DailyWeatherData[][] = []
     let runningWeekend: DailyWeatherData[] = []
-    for(const dayilyData of t.dailyWeatherData){
-      if(isHelg_(dayilyData)){
+    for (const dayilyData of t.dailyWeatherData) {
+      if (isHelg_(dayilyData)) {
         runningWeekend.push(dayilyData)
-      }else{
-        if( runningWeekend.length > 0 ) weekends.push(runningWeekend)
+      } else {
+        if (runningWeekend.length > 0) weekends.push(runningWeekend)
         runningWeekend = []
       }
     }
-    console.log(t.description)
-    for(const weekend of weekends){
-      let rainMax = Math.max.apply(Math, weekend.map(w => w.percipitationMax));
-      let rainMin = Math.min.apply(Math, weekend.map(w => w.percipitationMin));
-      let tempMax = Math.max.apply(Math, weekend.map(w => w.tempMax));
-      let tempMin = Math.min.apply(Math, weekend.map(w => w.tempMin));
-      console.log(`Friday ${weekend[0].dateString} -- ${tempMax}/${tempMin} : ${rainMax}/${rainMin}`)
+    for (const weekend of weekends) {
+      weekendData.push(new WeekendData(weekend, t))
     }
   }
+  thingsAndThangs.value = weekendData.sort((a, b) => b.totalScore - a.totalScore)
 }
 
-function isHelg(day: Dayjs): boolean{
-  return [5,6,0].includes(day.day()) 
+function isHelg(day: Dayjs): boolean {
+  return [5, 6, 0].includes(day.day())
 }
 
-function isHelg_(d: DailyWeatherData){
+function isHelg_(d: DailyWeatherData) {
   return isHelg(dayjs(d.dateString))
 }
 
@@ -481,17 +519,12 @@ onMounted(async () => {
 
 #goto-yr-button {
   pointer-events: all;
-  position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 5000;
-  margin: 7px;
   cursor: pointer;
 }
 
 #top-map-container {
   display: grid;
-  grid-template-rows: 75px 1fr;
+  grid-template-columns: 75px 1fr 75px;
 }
 
 #middle-map-container {
@@ -562,6 +595,13 @@ onMounted(async () => {
   z-index: 3;
 }
 
+#top-right-container-top {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  height: 100%;
+  align-items: center;
+}
+
 .day-graph {
   width: 100%;
   height: 100%;
@@ -570,5 +610,25 @@ onMounted(async () => {
 
 .infront-of-chart {
   z-index: 10;
+}
+
+.single-trip-suggestion-container {
+  font-size: large;
+  background-color: white;
+  margin: 1rem;
+  border-radius: 5px;
+  box-shadow: 5px 3px 10px rgb(184, 184, 184);
+  pointer-events: all;
+}
+
+.image-inline-text {
+  height: 1em;
+}
+
+.trip-suggestion-weather-data-row {
+  display: grid;
+  font-size: medium;
+  grid-template-columns: 1fr 50% 1fr;
+  padding: 5px;
 }
 </style>
